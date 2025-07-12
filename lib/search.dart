@@ -64,7 +64,6 @@ class _SearchScreenState extends State<SearchScreen> {
         setState(() {
           _response = "Ошибка: Требуется повторная авторизация";
         });
-        // Можно добавить автоматический переход на экран логина
       } else {
         throw Exception("Ошибка API: ${response.statusCode}\n${response.body}");
       }
@@ -143,15 +142,17 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.only(left: 8.0, right: 8.0, top: 8.0, bottom: 24.0),
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _inputController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: "Введите ваше сообщение...",
-                      border: OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20.0)
+                      ),
                     ),
                     onSubmitted: (_) => _sendMessage(),
                   ),

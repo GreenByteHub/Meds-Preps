@@ -1,7 +1,6 @@
-import 'package:app/auth/login.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'dart:convert';
+import 'package:app/swagger.dart';
+import 'package:app/search.dart';
 
 class RegistrationScreen extends StatelessWidget {
   RegistrationScreen({super.key});
@@ -9,45 +8,6 @@ class RegistrationScreen extends StatelessWidget {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController repeatPasswordController =
       TextEditingController();
-
-  Future<bool> _registerUser(BuildContext context) async {
-    final username = nameController.text;
-    final password = passwordController.text;
-
-    try {
-      final response = await http.post(
-        Uri.parse('http://10.0.2.2:8000/auth/register'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'login': nameController.text,
-          'password': passwordController.text,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('OK')));
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => LoginScreen(clearFields: true),
-          ),
-        );
-        return true;
-      } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('${response.body}')));
-        return false;
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Connection error: $e')));
-      return false;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -104,10 +64,7 @@ class RegistrationScreen extends StatelessWidget {
                 alignment: Alignment.center,
                 child: TextButton(
                   onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => LoginScreen()),
-                    );
+                    Navigator.pop(context);
                   },
                   child: const Text(
                     'Login',
@@ -131,10 +88,37 @@ class RegistrationScreen extends StatelessWidget {
                       const BorderSide(color: Colors.black, width: 0.8),
                     ),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     if (passwordController.text ==
                         repeatPasswordController.text) {
-                      _registerUser(context);
+
+                      final isRegistered = await Swagger.registerUser(
+                        context,
+                        nameController.text,
+                        passwordController.text,
+                      );
+
+                      if (isRegistered) {
+                        final authData = await Swagger.loginUser(
+                          context,
+                          nameController.text,
+                          passwordController.text,
+                        );
+
+                        if (authData != null && authData['access_token'] != null) {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SearchScreen(
+                                authToken: authData['access_token']!,
+                                baseUrl: 'http://10.0.2.2:8000',
+                              ),
+                            ),
+                          );
+                        } else {
+                          print('Ошибка: не удалось получить токен');
+                        }
+                      }
                     }
                   },
                   child: const Text('Create'),

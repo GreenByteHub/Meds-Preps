@@ -1,55 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import '../search.dart';
 import 'registration.dart';
-import 'dart:convert';
+import 'package:app/swagger.dart';
 
 class LoginScreen extends StatelessWidget {
   final bool clearFields;
   LoginScreen({super.key, this.clearFields = false});
   final TextEditingController nameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
-  Future<Map<String, dynamic>?> _loginUser(BuildContext context) async {
-    final username = nameController.text;
-    final password = passwordController.text;
-
-    try {
-      final response = await http.post(
-        Uri.parse('http://10.0.2.2:8000/auth/login'),
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {
-          'grant_type': 'password',
-          'username': username,
-          'password': password,
-          'scope': '',
-          'client_id': '',
-          'client_secret': '',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Успешный вход!')),
-        );
-        return {
-          'access_token': responseData['access_token'],
-          'token_type': responseData['token_type'] ?? 'Bearer',
-        };
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка: ${response.body}')),
-        );
-        return null;
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка соединения: $e')),
-      );
-      return null;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -125,7 +83,7 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () async {
-                    final authData = await _loginUser(context);
+                    final authData = await Swagger.loginUser(context, nameController.text, passwordController.text);
                     if (authData != null) {
                       Navigator.pushReplacement(
                         context,
