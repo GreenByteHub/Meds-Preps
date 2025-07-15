@@ -10,6 +10,8 @@ from backend.exceptions import UserAlreadyExists
 from backend.schemas import UserResponse, UserCreate, TokenPair, RefreshToken
 from backend.utils import verify_password, create_access_token, create_refresh_token, decode_refresh_token
 from backend.models import User
+from backend.google_auth import verify_google_token
+from backend.schemas import GoogleToken
 
 router = APIRouter(tags=["Authentication"])
 
@@ -54,6 +56,42 @@ async def login_user(
     return TokenPair(
         access_token=access_token_,
         refresh_token=refresh_token_,
+        token_type="bearer"
+    )
+
+@router.post("/google-auth", response_model=TokenPair)
+async def google_auth(
+        google_token: GoogleToken,
+        db: AsyncSession = Depends(get_db)
+):
+    try:
+        user_info = await verify_google_token(google_token.id_token)
+    except HTTPException as e:
+        raise e
+
+    user = await get_user_by_login(db, user_info['email'])
+
+    if not user:
+        user_data = UserCreate(
+            login=user_info['email'],
+            password="",
+            full_name=f"{user_info.get('given_name', '')} {user_info.get('family_name', '')}".strip(),
+            is_google=True
+        )
+
+        try:
+            user = await create_user(db, user_data, is_google=True)
+        except UserAlreadyExists:
+            user = await get_user_by_login(db, user_info['email'])
+
+    access_token = create_access_token(data={"sub": user.login})
+    refresh_token = create_refresh_token(data={"sub": user.login})
+
+    await update_refresh_token(db, user.id, refresh_token)
+
+    return TokenPair(
+        access_token=access_token,
+        refresh_token=refresh_token,
         token_type="bearer"
     )
 

@@ -69,6 +69,35 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
             Padding(
+              padding: const EdgeInsets.only(),
+              child: Align(
+                alignment: Alignment.center,
+                child: TextButton(
+                  onPressed: () async {
+                    final res = await Swagger.handleGoogleSignIn();
+                    if(res.values.first) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SearchScreen(
+                            authToken: res.keys.first,
+                            baseUrl: 'http://10.0.2.2:8000',
+                          ),
+                        ),
+                      );
+                    }
+                    else {
+                      print(res);
+                    }
+                  },
+                  child: const Text(
+                    'Google',
+                    style: TextStyle(color: Colors.blue, fontSize: 16),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
               child: SizedBox(
                 width: 300,

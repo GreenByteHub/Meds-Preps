@@ -9,7 +9,7 @@ class UserBase(BaseModel):
     )
 
     password: str = Field(
-        min_length=6,
+        min_length=0,
         max_length=30,
         examples=["g%4l@6A"],
         description="Пароль (длиной от 6 до 30 символов)"
@@ -37,3 +37,12 @@ class TokenPair(BaseModel):
 
 class RefreshToken(BaseModel):
     refresh_token: str
+
+class GoogleToken(BaseModel):
+    id_token: str
+
+class GoogleUserInfo(BaseModel):
+    email: str
+    given_name: str
+    family_name: str
+    picture: str | None = None
